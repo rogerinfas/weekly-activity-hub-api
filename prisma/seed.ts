@@ -4,10 +4,10 @@ const prisma = new PrismaClient();
 
 const DEFAULT_PROJECTS = [
   { name: 'WorkWear', label: 'WorkWear', color: 'blue', order: 0 },
-  { name: 'diseño', label: 'Diseño', color: 'violet', order: 1 },
-  { name: 'marketing', label: 'Marketing', color: 'pink', order: 2 },
-  { name: 'personal', label: 'Personal', color: 'amber', order: 3 },
-  { name: 'otro', label: 'Otro', color: 'slate', order: 4 },
+  { name: 'CMLine', label: 'CMLine', color: 'violet', order: 1 },
+  { name: 'PERUFLORES', label: 'PERUFLORES', color: 'pink', order: 2 },
+  { name: 'MACHUPICCHU', label: 'MACHUPICCHU', color: 'amber', order: 3 },
+  { name: 'TODO SERVICIOS', label: 'TODO SERVICIOS', color: 'slate', order: 4 },
 ];
 
 async function main() {

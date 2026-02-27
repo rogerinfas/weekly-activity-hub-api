@@ -7,6 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Project {
+  id    String @id @default(uuid())
+  name  String @unique
+  label String
+  color String
+  order Int    @default(0)
+}
+
 model Task {
   id          String    @id @default(uuid())
   title       String

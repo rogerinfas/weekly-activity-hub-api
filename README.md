@@ -1,98 +1,155 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Weekly Activity Hub — API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+REST API for the **Weekly Activity Hub** task management application. Built with [NestJS](https://nestjs.com/) and [Prisma](https://www.prisma.io/) on top of PostgreSQL.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Stack
 
-## Description
+| Layer | Technology |
+|---|---|
+| Framework | NestJS 11 |
+| ORM | Prisma 6 |
+| Database | PostgreSQL |
+| Validation | class-validator + class-transformer |
+| Language | TypeScript 5 |
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Prerequisites
 
-## Project setup
+- Node.js ≥ 20
+- pnpm ≥ 9
+- PostgreSQL instance (local or remote)
 
-```bash
-$ pnpm install
+## Environment variables
+
+Create a `.env` file at the project root:
+
+```env
+# PostgreSQL connection string
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE"
+
+# Optional — defaults to 7000
+PORT=7000
 ```
 
-## Compile and run the project
+## Setup
 
 ```bash
-# development
-$ pnpm run start
+# Install dependencies
+pnpm install
 
-# watch mode
-$ pnpm run start:dev
+# Apply database migrations
+pnpm prisma migrate deploy
 
-# production mode
-$ pnpm run start:prod
+# Generate Prisma client
+pnpm prisma generate
 ```
 
-## Run tests
+## Running the server
 
 ```bash
-# unit tests
-$ pnpm run test
+# Development (watch mode)
+pnpm start:dev
 
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+# Production
+pnpm start:prod
 ```
 
-## Deployment
+The API runs on **http://localhost:7000** by default.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## API reference
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+All endpoints are prefixed with `/tasks`.
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/tasks` | List all tasks ordered by `order` asc |
+| `POST` | `/tasks` | Create a new task |
+| `GET` | `/tasks/:id` | Get a single task |
+| `PATCH` | `/tasks/:id` | Update a task (partial) |
+| `DELETE` | `/tasks/:id` | Delete a task |
+
+### Task fields
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `title` | `string` | ✅ | |
+| `status` | `"backlog" \| "en-progreso" \| "completado"` | ✅ | |
+| `project` | `"desarrollo" \| "diseño" \| "marketing" \| "personal" \| "otro"` | ✅ | |
+| `description` | `string` | — | |
+| `date` | `ISO date string` | — | Start / due date |
+| `order` | `number` | — | Column position, defaults to `0` |
+
+> **Note:** `completedAt` and `createdAt` are managed automatically by the server. Any value sent by the client for these fields is ignored.
+
+### Example — create a task
+
+```http
+POST /tasks
+Content-Type: application/json
+
+{
+  "title": "Design landing page",
+  "status": "backlog",
+  "project": "diseño"
+}
+```
+
+### Example — move to completed
+
+```http
+PATCH /tasks/abc-123
+Content-Type: application/json
+
+{
+  "status": "completado"
+}
+```
+
+## Tests
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+# Unit tests
+pnpm test
+
+# Watch mode
+pnpm test:watch
+
+# Coverage
+pnpm test:cov
+
+# End-to-end
+pnpm test:e2e
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Database migrations
 
-## Resources
+```bash
+# Create a new migration after editing prisma/schema.prisma
+pnpm prisma migrate dev --name <migration-name>
 
-Check out a few resources that may come in handy when working with NestJS:
+# Apply migrations in production
+pnpm prisma migrate deploy
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+# Open Prisma Studio
+pnpm prisma studio
+```
 
-## Support
+## Project structure
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```
+src/
+├── app.module.ts          # Root module
+├── main.ts                # Bootstrap (CORS, ValidationPipe, port)
+├── prisma/
+│   ├── prisma.module.ts
+│   └── prisma.service.ts
+└── tasks/
+    ├── dto/
+    │   ├── create-task.dto.ts
+    │   └── update-task.dto.ts
+    ├── tasks.controller.ts
+    ├── tasks.module.ts
+    └── tasks.service.ts
+prisma/
+├── schema.prisma
+└── migrations/
+```

@@ -3,19 +3,25 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 
+const COMPLETED_STATUS = 'completado';
+
 @Injectable()
 export class TasksService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createTaskDto: CreateTaskDto) {
+    const { completedAt: _clientCompletedAt, ...rest } = createTaskDto;
+
+    const completedAt = rest.status === COMPLETED_STATUS ? new Date() : null;
+
     return this.prisma.task.create({
-      data: createTaskDto,
+      data: { ...rest, completedAt },
     });
   }
 
   async findAll() {
     return this.prisma.task.findMany({
-      orderBy: { order: 'asc' }, // By default sort by order
+      orderBy: { order: 'asc' },
     });
   }
 
@@ -28,17 +34,31 @@ export class TasksService {
   }
 
   async update(id: string, updateTaskDto: UpdateTaskDto) {
-    // Verifies if it exists
-    await this.findOne(id);
-    
+    const existing = await this.findOne(id);
+    const { completedAt: _clientCompletedAt, ...rest } = updateTaskDto;
+
+    let completedAt: Date | null = existing.completedAt;
+
+    if (rest.status !== undefined) {
+      const movingToCompleted =
+        rest.status === COMPLETED_STATUS && existing.status !== COMPLETED_STATUS;
+      const movingFromCompleted =
+        rest.status !== COMPLETED_STATUS && existing.status === COMPLETED_STATUS;
+
+      if (movingToCompleted) {
+        completedAt = new Date();
+      } else if (movingFromCompleted) {
+        completedAt = null;
+      }
+    }
+
     return this.prisma.task.update({
       where: { id },
-      data: updateTaskDto,
+      data: { ...rest, completedAt },
     });
   }
 
   async remove(id: string) {
-    // Verifies if it exists
     await this.findOne(id);
 
     return this.prisma.task.delete({

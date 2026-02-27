@@ -1,6 +1,10 @@
 import { IsString, IsOptional, IsDateString, IsInt, IsUUID } from 'class-validator';
 
 export class CreateTaskDto {
+  @IsUUID()
+  @IsOptional()
+  id?: string;
+
   @IsString()
   title: string;
 
@@ -21,4 +25,13 @@ export class CreateTaskDto {
   @IsInt()
   @IsOptional()
   order?: number;
+
+  @IsDateString()
+  @IsOptional()
+  createdAt?: string;
+
+  @IsDateString()
+  @IsOptional()
+  completedAt?: string;
 }
+

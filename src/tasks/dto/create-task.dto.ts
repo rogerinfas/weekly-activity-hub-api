@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsDateString, IsInt, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsDateString, IsInt, IsUUID, IsIn } from 'class-validator';
+
+export const VALID_STATUSES = ['backlog', 'en-progreso', 'completado'] as const;
+export const VALID_PROJECTS = ['desarrollo', 'diseño', 'marketing', 'personal', 'otro'] as const;
+
+export type TaskStatus = (typeof VALID_STATUSES)[number];
+export type TaskProject = (typeof VALID_PROJECTS)[number];
 
 export class CreateTaskDto {
   @IsUUID()
@@ -12,11 +18,11 @@ export class CreateTaskDto {
   @IsOptional()
   description?: string;
 
-  @IsString()
-  status: string;
+  @IsIn(VALID_STATUSES)
+  status: TaskStatus;
 
-  @IsString()
-  project: string;
+  @IsIn(VALID_PROJECTS)
+  project: TaskProject;
 
   @IsDateString()
   @IsOptional()

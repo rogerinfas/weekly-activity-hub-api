@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, Query } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -18,14 +18,18 @@ export class TasksController {
     return this.tasksService.findAll();
   }
 
+   @Get('metrics')
+   @HttpCode(HttpStatus.OK)
+   metrics(
+     @Query('startDate') startDate?: string,
+     @Query('endDate') endDate?: string,
+   ) {
+     return this.tasksService.getMetrics({ startDate, endDate });
+   }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.tasksService.findOne(id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
-    return this.tasksService.update(id, updateTaskDto);
   }
 
   @Patch('reorder/batch')
@@ -37,6 +41,11 @@ export class TasksController {
     },
   ) {
     return this.tasksService.reorderMany(body.updates);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
+    return this.tasksService.update(id, updateTaskDto);
   }
 
   @Delete(':id')

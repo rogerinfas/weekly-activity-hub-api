@@ -28,6 +28,17 @@ export class TasksController {
     return this.tasksService.update(id, updateTaskDto);
   }
 
+  @Patch('reorder/batch')
+  @HttpCode(HttpStatus.OK)
+  reorderBatch(
+    @Body()
+    body: {
+      updates: { id: string; status: string; order: number }[];
+    },
+  ) {
+    return this.tasksService.reorderMany(body.updates);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string) {

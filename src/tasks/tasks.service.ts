@@ -58,6 +58,57 @@ export class TasksService {
     });
   }
 
+  async reorderMany(
+    updates: { id: string; status: string; order: number }[],
+  ) {
+    if (!updates || updates.length === 0) {
+      return [];
+    }
+
+    const ids = updates.map(u => u.id);
+    const existingTasks = await this.prisma.task.findMany({
+      where: { id: { in: ids } },
+    });
+
+    const existingById = new Map(existingTasks.map(t => [t.id, t]));
+
+    const operations = updates.map(update => {
+      const existing = existingById.get(update.id);
+      if (!existing) {
+        return null;
+      }
+
+      let completedAt = existing.completedAt;
+      const movingToCompleted =
+        update.status === COMPLETED_STATUS &&
+        existing.status !== COMPLETED_STATUS;
+      const movingFromCompleted =
+        update.status !== COMPLETED_STATUS &&
+        existing.status === COMPLETED_STATUS;
+
+      if (movingToCompleted) {
+        completedAt = new Date();
+      } else if (movingFromCompleted) {
+        completedAt = null;
+      }
+
+      return this.prisma.task.update({
+        where: { id: update.id },
+        data: {
+          status: update.status,
+          order: update.order,
+          completedAt,
+        },
+      });
+    }).filter((op): op is ReturnType<PrismaService['task']['update']> => op !== null);
+
+    if (operations.length === 0) {
+      return [];
+    }
+
+    return this.prisma.$transaction(operations);
+  }
+
   async remove(id: string) {
     await this.findOne(id);
 

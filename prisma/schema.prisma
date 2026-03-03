@@ -16,13 +16,15 @@ model Project {
 }
 
 model Task {
-  id          String    @id @default(uuid())
-  title       String
-  description String?
-  status      String
-  project     String
-  date        DateTime?
-  createdAt   DateTime  @default(now())
-  completedAt DateTime?
-  order       Int       @default(0)
+  id                   String    @id @default(uuid())
+  title                String
+  description          String?
+  status               String
+  project              String
+  date                 DateTime?
+  createdAt            DateTime  @default(now())
+  completedAt          DateTime?
+  order                Int       @default(0)
+  totalTrackedSeconds  Int       @default(0)
+  activeTimerStartedAt DateTime?
 }

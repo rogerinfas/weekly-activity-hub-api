@@ -58,6 +58,42 @@ export class TasksService {
     });
   }
 
+  async startTimer(id: string) {
+    const existing = await this.findOne(id);
+
+    if (existing.activeTimerStartedAt) {
+      return existing;
+    }
+
+    return this.prisma.task.update({
+      where: { id },
+      data: {
+        activeTimerStartedAt: new Date(),
+      },
+    });
+  }
+
+  async stopTimer(id: string) {
+    const existing = await this.findOne(id);
+
+    if (!existing.activeTimerStartedAt) {
+      return existing;
+    }
+
+    const now = new Date();
+    const startedAt = existing.activeTimerStartedAt;
+    const deltaMs = now.getTime() - startedAt.getTime();
+    const deltaSeconds = Math.max(0, Math.floor(deltaMs / 1000));
+
+    return this.prisma.task.update({
+      where: { id },
+      data: {
+        activeTimerStartedAt: null,
+        totalTrackedSeconds: existing.totalTrackedSeconds + deltaSeconds,
+      },
+    });
+  }
+
   async reorderMany(
     updates: { id: string; status: string; order: number }[],
   ) {
@@ -157,6 +193,16 @@ export class TasksService {
     const completed = tasks.filter(t => t.status === COMPLETED_STATUS).length;
     const inProgress = tasks.filter(t => t.status === 'en-progreso').length;
 
+    const totalTrackedSecondsGlobal = tasks.reduce(
+      (acc, t) => acc + (t.totalTrackedSeconds ?? 0),
+      0,
+    );
+
+    const projectTime = tasks.reduce<Record<string, number>>((acc, t) => {
+      acc[t.project] = (acc[t.project] ?? 0) + (t.totalTrackedSeconds ?? 0);
+      return acc;
+    }, {});
+
     const projectCounts = tasks.reduce<Record<string, number>>((acc, t) => {
       acc[t.project] = (acc[t.project] ?? 0) + 1;
       return acc;
@@ -168,6 +214,21 @@ export class TasksService {
 
     const topProjectEntry = sortedProjects[0] ?? null;
 
+    const timeByProject = Object.entries(projectTime)
+      .map(([project, totalSeconds]) => ({ project, totalSeconds }))
+      .sort((a, b) => b.totalSeconds - a.totalSeconds);
+
+    const topTasksByTime = [...tasks]
+      .filter(t => (t.totalTrackedSeconds ?? 0) > 0)
+      .sort((a, b) => (b.totalTrackedSeconds ?? 0) - (a.totalTrackedSeconds ?? 0))
+      .slice(0, 10)
+      .map(t => ({
+        id: t.id,
+        title: t.title,
+        project: t.project,
+        totalSeconds: t.totalTrackedSeconds ?? 0,
+      }));
+
     return {
       tasks,
       summary: {
@@ -177,6 +238,9 @@ export class TasksService {
         topProject: topProjectEntry
           ? { project: topProjectEntry[0], count: topProjectEntry[1] }
           : null,
+        totalTrackedSecondsGlobal,
+        timeByProject,
+        topTasksByTime,
       },
     };
   }

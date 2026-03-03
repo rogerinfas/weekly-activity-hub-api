@@ -38,6 +38,8 @@ export class TasksService {
     const { completedAt: _clientCompletedAt, ...rest } = updateTaskDto;
 
     let completedAt: Date | null = existing.completedAt;
+    let activeTimerStartedAt = existing.activeTimerStartedAt;
+    let totalTrackedSeconds = existing.totalTrackedSeconds;
 
     if (rest.status !== undefined) {
       const movingToCompleted =
@@ -47,14 +49,24 @@ export class TasksService {
 
       if (movingToCompleted) {
         completedAt = new Date();
+        if (activeTimerStartedAt) {
+          const now = new Date();
+          const deltaMs = now.getTime() - activeTimerStartedAt.getTime();
+          const deltaSeconds = Math.max(0, Math.floor(deltaMs / 1000));
+          totalTrackedSeconds += deltaSeconds;
+          activeTimerStartedAt = null;
+        }
       } else if (movingFromCompleted) {
         completedAt = null;
+        if (!activeTimerStartedAt) {
+          activeTimerStartedAt = new Date();
+        }
       }
     }
 
     return this.prisma.task.update({
       where: { id },
-      data: { ...rest, completedAt },
+      data: { ...rest, completedAt, activeTimerStartedAt, totalTrackedSeconds },
     });
   }
 
@@ -115,6 +127,8 @@ export class TasksService {
       }
 
       let completedAt = existing.completedAt;
+      let activeTimerStartedAt = existing.activeTimerStartedAt;
+      let totalTrackedSeconds = existing.totalTrackedSeconds;
       const movingToCompleted =
         update.status === COMPLETED_STATUS &&
         existing.status !== COMPLETED_STATUS;
@@ -124,8 +138,18 @@ export class TasksService {
 
       if (movingToCompleted) {
         completedAt = new Date();
+        if (activeTimerStartedAt) {
+          const now = new Date();
+          const deltaMs = now.getTime() - activeTimerStartedAt.getTime();
+          const deltaSeconds = Math.max(0, Math.floor(deltaMs / 1000));
+          totalTrackedSeconds += deltaSeconds;
+          activeTimerStartedAt = null;
+        }
       } else if (movingFromCompleted) {
         completedAt = null;
+        if (!activeTimerStartedAt) {
+          activeTimerStartedAt = new Date();
+        }
       }
 
       return this.prisma.task.update({
@@ -134,6 +158,8 @@ export class TasksService {
           status: update.status,
           order: update.order,
           completedAt,
+          activeTimerStartedAt,
+          totalTrackedSeconds,
         },
       });
     }).filter((op): op is any => op !== null);

@@ -32,6 +32,18 @@ export class TasksController {
     return this.tasksService.findOne(id);
   }
 
+  @Post(':id/timer/start')
+  @HttpCode(HttpStatus.OK)
+  startTimer(@Param('id') id: string) {
+    return this.tasksService.startTimer(id);
+  }
+
+  @Post(':id/timer/stop')
+  @HttpCode(HttpStatus.OK)
+  stopTimer(@Param('id') id: string) {
+    return this.tasksService.stopTimer(id);
+  }
+
   @Patch('reorder/batch')
   @HttpCode(HttpStatus.OK)
   reorderBatch(

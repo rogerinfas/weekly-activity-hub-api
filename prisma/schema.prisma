@@ -27,4 +27,5 @@ model Task {
   order                Int       @default(0)
   totalTrackedSeconds  Int       @default(0)
   activeTimerStartedAt DateTime?
+  resumeTimerOnExit    Boolean   @default(false)
 }

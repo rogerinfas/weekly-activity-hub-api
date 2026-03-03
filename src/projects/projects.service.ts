@@ -51,7 +51,18 @@ export class ProjectsService {
   }
 
   async remove(id: string) {
-    await this.findOne(id);
+    const project = await this.findOne(id);
+
+    const taskCount = await this.prisma.task.count({
+      where: { project: project.name },
+    });
+
+    if (taskCount > 0) {
+      throw new ConflictException(
+        `Project "${project.name}" cannot be deleted because it has ${taskCount} linked task(s)`,
+      );
+    }
+
     return this.prisma.project.delete({ where: { id } });
   }
 }
